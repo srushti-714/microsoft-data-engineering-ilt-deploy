@@ -113,10 +113,10 @@ $global:tokenTimes = [ordered]@{
         PowerBI = (Get-Date -Year 1)
 }
 
-Write-Information "Assign Ownership to Proctors on Synapse Workspace"
-Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "6e4bf58a-b8e1-4cc3-bbf9-d73143322b78" -PrincipalId "37548b2e-e5ab-4d2b-b0da-4d812f56c30e"  # Workspace Admin
-Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "7af0c69a-a548-47d6-aea3-d00e69bd83aa" -PrincipalId "37548b2e-e5ab-4d2b-b0da-4d812f56c30e"  # SQL Admin
-Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "c3a6d2f1-a26f-4810-9b0f-591308d5cbf1" -PrincipalId "37548b2e-e5ab-4d2b-b0da-4d812f56c30e"  # Apache Spark Admin
+#Write-Information "Assign Ownership to Proctors on Synapse Workspace"
+#Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "6e4bf58a-b8e1-4cc3-bbf9-d73143322b78" -PrincipalId "37548b2e-e5ab-4d2b-b0da-4d812f56c30e"  # Workspace Admin
+#Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "7af0c69a-a548-47d6-aea3-d00e69bd83aa" -PrincipalId "37548b2e-e5ab-4d2b-b0da-4d812f56c30e"  # SQL Admin
+#Assign-SynapseRole -WorkspaceName $workspaceName -RoleId "c3a6d2f1-a26f-4810-9b0f-591308d5cbf1" -PrincipalId "37548b2e-e5ab-4d2b-b0da-4d812f56c30e"  # Apache Spark Admin
 
 #add the current user...
 $user = Get-AzADUser -UserPrincipalName $userName
@@ -220,6 +220,35 @@ else
 $download = $true;
 
 $publicDataUrl = "https://solliancepublicdata.blob.core.windows.net/"
+
+# $publicDataUrl= $null 
+# $rgLocation = (Get-AzResourceGroup -Name $resourceGroupName).Location
+          
+# if($rgLocation -like "eastus")
+# {
+#   $publicDataUrl = "https://l400eastus.blob.core.windows.net/"
+# }
+# elseif($rgLocation -like "northeurope")
+# {
+#    $publicDataUrl = "https://l400northeurope.blob.core.windows.net/"
+# }
+# elseif($rgLocation -like "westeurope")
+# {
+#   $publicDataUrl = "https://l400westeurope.blob.core.windows.net/"
+# }
+# elseif($rgLocation -like "southeastasia")
+# {
+#   $publicDataUrl = "https://l400southeastasia.blob.core.windows.net/"
+# }
+# elseif($rgLocation -like "westus2")
+# {
+#   $publicDataUrl = "https://l400westus2.blob.core.windows.net/"
+# }
+# else   #Check for southcentralus
+# {
+#   $publicDataUrl = "https://l400southcentralus.blob.core.windows.net/"
+# }
+
 $dataLakeStorageUrl = "https://"+ $dataLakeAccountName + ".dfs.core.windows.net/"
 $dataLakeStorageBlobUrl = "https://"+ $dataLakeAccountName + ".blob.core.windows.net/"
 $dataLakeStorageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $resourceGroupName -AccountName $dataLakeAccountName)[0].Value
@@ -537,15 +566,15 @@ foreach ($pipeline in $workloadPipelines.Keys) {
 Write-Information "Create SQL scripts"
 
 $sqlScripts = [ordered]@{
-        "Lab 05 - Exercise 3 - Column Level Security" = "$artifactsPath\day-02\lab-05-security"
-        "Lab 05 - Exercise 3 - Dynamic Data Masking" = "$artifactsPath\day-02\lab-05-security"
-        "Lab 05 - Exercise 3 - Row Level Security" = "$artifactsPath\day-02\lab-05-security"
-        "Activity 03 - Data Warehouse Optimization" = "$artifactsPath\day-02"
+        "Lab 05 - Exercise 3 - Column Level Security" = "Lab 05 - Exercise 3 - Column Level Security"
+        "Lab 05 - Exercise 3 - Dynamic Data Masking" = "Lab 05 - Exercise 3 - Dynamic Data Masking"
+        "Lab 05 - Exercise 3 - Row Level Security" = "Lab 05 - Exercise 3 - Row Level Security"
+        "Activity 03 - Data Warehouse Optimization" = "Activity 03 - Data Warehouse Optimization"
 }
 
 foreach ($sqlScriptName in $sqlScripts.Keys) {
         
-        $sqlScriptFileName = "$($sqlScripts[$sqlScriptName])\$($sqlScriptName).sql"
+        $sqlScriptFileName = "$sqlScriptName.sql"
         Write-Information "Creating SQL script $($sqlScriptName) from $($sqlScriptFileName)"
         
         $result = Create-SQLScript -TemplatesPath $templatesPath -WorkspaceName $workspaceName -Name $sqlScriptName -ScriptFileName $sqlScriptFileName
@@ -674,3 +703,11 @@ Update-AzCosmosDBSqlContainer -ResourceGroupName $resourceGroupName `
         -Name $cosmosDbContainer -Throughput 400 `
         -PartitionKeyKind $container.Resource.PartitionKey.Kind `
         -PartitionKeyPath $container.Resource.PartitionKey.Paths
+
+<#Write-Information "Pausing the $($sqlPoolName) SQL pool"
+
+$result = Get-SQLPool -SubscriptionId $subscriptionId -ResourceGroupName $resourceGroupName -WorkspaceName $workspaceName -SQLPoolName $sqlPoolName
+if ($result.properties.status -eq "Online") {
+Control-SQLPool -SubscriptionId $subscriptionId -ResourceGroupName $resourceGroupName -WorkspaceName $workspaceName -SQLPoolName $sqlPoolName -Action pause
+Wait-ForSQLPool -SubscriptionId $subscriptionId -ResourceGroupName $resourceGroupName -WorkspaceName $workspaceName -SQLPoolName $sqlPoolName -TargetStatus Paused
+} #>
